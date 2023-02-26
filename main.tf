@@ -48,3 +48,21 @@ resource "google_storage_bucket_object" "build_artifact" {
     bucket = google_storage_bucket.build_bucket.name
     source = "build/processor_function.zip"
 }
+# Processor cloud function
+resource "google_cloudfunctions2_function" "processor_function"{
+    name = "${var.deployment_id}-${var.env}-processor-function"
+    description = "Function to process email data"
+    build_config {
+        runtime = "python310"
+        entry_point = "handler"
+        source {
+            storage_source {
+                bucket = google_storage_bucket.build_bucket.name
+                object = google_storage_bucket_object.build_artifact.name
+            }
+        }
+    }
+    environment_variables = {
+        GOOGLE_SHEET_ID = var.google_sheet_id
+    }
+}
