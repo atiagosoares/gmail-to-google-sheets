@@ -31,7 +31,20 @@ terraform {
 }
 
 # RESOURCES
-# Pub/Sub Topic
+# Pub/Sub Topic to receive email updates
 resource "google_pubsub_topic" "email_topic" {
-    name = "email-topic"
+    name = "${var.deployment_id}-${var.env}-topic"
+}
+# Build bucket for storing build artifacts
+resource "google_storage_bucket" "build_bucket" {
+    name = "${var.deployment_id}-${var.env}-build-bucket"
+    location = var.gcp_config["region"]
+    storage_class = "REGIONAL"
+    force_destroy = true
+}
+# Build artifact for the cloud funciton
+resource "google_storage_bucket_object" "build_artifact" {
+    name = "processor_function.zip"
+    bucket = google_storage_bucket.build_bucket.name
+    source = "build/processor_function.zip"
 }
