@@ -74,14 +74,16 @@ resource "google_cloudfunctions2_function" "processor_function"{
                 object = google_storage_bucket_object.build_artifact.name
             }
         }
-        environment_variables = {
-            GOOGLE_SHEET_ID = var.google_sheet_id
-        }
     }
     service_config {
       available_memory = "256M"
       timeout_seconds = 30
       service_account_email = google_service_account.processor_svc.email
+      environment_variables = {
+        GOOGLE_SHEET_ID = var.google_sheet_id
+        REDISHOST = google_redis_instance.sync.host
+        REDISPORT = google_redis_instance.sync.port
+      }
     }
     event_trigger {
         event_type = "google.cloud.pubsub.topic.v1.messagePublished"
