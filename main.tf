@@ -55,6 +55,11 @@ resource "google_storage_bucket_object" "build_artifact" {
     bucket = google_storage_bucket.build_bucket.name
     source = local.processor_function_build.path
 }
+# Service account for the cloud function
+resource "google_service_account" "processor_svc" {
+    account_id = "${var.deployment_id}-${var.env}-svc"
+    display_name = "Service account for the processor function"
+}
 # Processor cloud function
 resource "google_cloudfunctions2_function" "processor_function"{
     name = "${var.deployment_id}-${var.env}-processor-function"
@@ -76,5 +81,11 @@ resource "google_cloudfunctions2_function" "processor_function"{
     service_config {
       available_memory = "256M"
       timeout_seconds = 30
+      service_account_email = google_service_account.processor_svc.email
     }
+    event_trigger {
+        event_type = "google.cloud.pubsub.topic.v1.messagePublished"
+        pubsub_topic = google_pubsub_topic.email_topic.id
+        retry_policy = "RETRY_POLICY_RETRY"
+    }     
 }
