@@ -89,3 +89,9 @@ resource "google_cloudfunctions2_function" "processor_function"{
         retry_policy = "RETRY_POLICY_RETRY"
     }     
 }
+
+# Redis memory store
+resource "google_redis_instance" "sync" {
+    name = "${var.deployment_id}-${var.env}-sync"
+    memory_size_gb = 1
+}
