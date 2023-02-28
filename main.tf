@@ -25,8 +25,8 @@ provider "google" {
 # BACKEND CONFIG
 terraform {
     backend "gcs" {
-        bucket = "tf-states-12698"
-        prefix = "terraform/state"
+        bucket = "terraform-92637"
+        prefix = ""
     }
 }
 
@@ -39,19 +39,27 @@ resource "google_pubsub_topic" "email_topic" {
 resource "google_storage_bucket" "build_bucket" {
     name = "${var.deployment_id}-${var.env}-build-bucket"
     location = var.gcp_config["region"]
-    storage_class = "REGIONAL"
-    force_destroy = true
+    uniform_bucket_level_access = true
 }
+
 # Build artifact for the cloud funciton
+locals {
+    processor_function_build = {
+        "path" = "build/processor_function.zip"
+        "version_hash" = filesha256("build/processor_function.zip")
+    }
+}
+
 resource "google_storage_bucket_object" "build_artifact" {
-    name = "processor_function.zip"
+    name = "processor_function.${local.processor_function_build.version_hash}.zip"
     bucket = google_storage_bucket.build_bucket.name
-    source = "build/processor_function.zip"
+    source = local.processor_function_build.path
 }
 # Processor cloud function
 resource "google_cloudfunctions2_function" "processor_function"{
     name = "${var.deployment_id}-${var.env}-processor-function"
     description = "Function to process email data"
+    location = var.gcp_config["region"]
     build_config {
         runtime = "python310"
         entry_point = "handler"
@@ -61,8 +69,12 @@ resource "google_cloudfunctions2_function" "processor_function"{
                 object = google_storage_bucket_object.build_artifact.name
             }
         }
+        environment_variables = {
+            GOOGLE_SHEET_ID = var.google_sheet_id
+        }
     }
-    environment_variables = {
-        GOOGLE_SHEET_ID = var.google_sheet_id
+    service_config {
+      available_memory = "256M"
+      timeout_seconds = 30
     }
 }

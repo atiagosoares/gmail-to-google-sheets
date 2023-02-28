@@ -8,6 +8,8 @@ if [ ! -f /usr/bin/zip ]; then
 fi
 # Creates the /build directory if it doesn't exist
 mkdir -p build
+# Delete existing archive file, if existing
+rm -f build/processor_function.zip
 # Navigate to the source code directory
 cd src/processor_function
 # Zip
