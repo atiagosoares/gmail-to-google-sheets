@@ -44,17 +44,16 @@ resource "google_storage_bucket" "build_bucket" {
 }
 
 # Build artifact for the cloud funciton
-locals {
-    processor_function_build = {
-        "path" = "build/processor_function.zip"
-        "version_hash" = filesha256("build/processor_function.zip")
-    }
+data "archive_file" "processor_function" {
+    type = "zip"
+    source_dir = "src/processor_function"
+    output_path = "build/processor_function.zip"
 }
 
 resource "google_storage_bucket_object" "build_artifact" {
-    name = "processor_function.${local.processor_function_build.version_hash}.zip"
+    name = "${var.deployment_id}/${var.env}/processor_function/${data.archive_file.processor_function.output_md5}.zip"
     bucket = google_storage_bucket.build_bucket.name
-    source = local.processor_function_build.path
+    source = data.archive_file.processor_function.output_path
 }
 # Service account for the cloud function
 resource "google_service_account" "processor_svc" {
