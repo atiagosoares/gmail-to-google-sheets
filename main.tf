@@ -22,6 +22,7 @@ provider "google" {
     region  = var.gcp_config["region"]
     zone    = var.gcp_config["zone"]
 }
+
 # BACKEND CONFIG
 terraform {
     backend "gcs" {
@@ -81,8 +82,7 @@ resource "google_cloudfunctions2_function" "processor_function"{
       service_account_email = google_service_account.processor_svc.email
       environment_variables = {
         GOOGLE_SHEET_ID = var.google_sheet_id
-        REDISHOST = google_redis_instance.sync.host
-        REDISPORT = google_redis_instance.sync.port
+        
       }
     }
     event_trigger {
@@ -90,10 +90,4 @@ resource "google_cloudfunctions2_function" "processor_function"{
         pubsub_topic = google_pubsub_topic.email_topic.id
         retry_policy = "RETRY_POLICY_RETRY"
     }     
-}
-
-# Redis memory store
-resource "google_redis_instance" "sync" {
-    name = "${var.deployment_id}-${var.env}-sync"
-    memory_size_gb = 1
 }
