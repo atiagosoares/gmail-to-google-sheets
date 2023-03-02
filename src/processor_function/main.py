@@ -5,7 +5,6 @@ from google.auth import default
 import os
 from datetime import datetime
 
-GCP_PROJECT_ID = os.environ.get('GCP_PROJECT_ID')
 SPREADSHEET_ID = os.environ.get('SPREADSHEET_ID')
 # Create singleton db client
 # This is done for performance reasons > reinstantiating the client is expensive

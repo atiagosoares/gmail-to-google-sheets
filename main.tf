@@ -58,7 +58,13 @@ resource "google_storage_bucket_object" "build_artifact" {
 # Service account for the cloud function
 resource "google_service_account" "processor_svc" {
     account_id = "${var.deployment_id}-${var.env}-svc"
-    display_name = "Service account for the processor function"
+    display_name = "Service account for the processor function"   
+}
+# Give the service account firestore permissions
+resource "google_project_iam_member" "processor_svc_firestore" {
+    role = "roles/datastore.user"
+    member = "serviceAccount:${google_service_account.processor_svc.email}"
+    project = var.gcp_config["project"]
 }
 # Processor cloud function
 resource "google_cloudfunctions2_function" "processor_function"{
