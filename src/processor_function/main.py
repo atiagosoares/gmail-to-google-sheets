@@ -1,16 +1,20 @@
 import functions_framework
 from base64 import b64decode
 from google.cloud.firestore import Client
+from google.auth import default
 import os
 from datetime import datetime
 
+GCP_PROJECT_ID = os.environ.get('GCP_PROJECT_ID')
+GOOGLE_SHEET_ID = os.environ.get('GOOGLE_SHEET_ID')
 # Create singleton db client
 # This is done for performance reasons > reinstantiating the client is expensive
 db_client = None
 def get_db_client():
     global db_client
     if db_client is None:
-        db_client = Client()
+        credentials = default()
+        db_client = Client(credentials = credentials, project=GCP_PROJECT_ID)
     return db_client
 
 # Dummy cloud function
