@@ -80,8 +80,7 @@ resource "google_cloudfunctions2_function" "processor_function"{
       timeout_seconds = 30
       service_account_email = google_service_account.processor_svc.email
       environment_variables = {
-        GOOGLE_SHEET_ID = var.google_sheet_id
-        GCP_PROJECT_ID = var.gcp_config["project"]
+        "SPREADHSEET_ID" = var.google_sheet_id
       }
     }
     event_trigger {

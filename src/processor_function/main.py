@@ -6,15 +6,15 @@ import os
 from datetime import datetime
 
 GCP_PROJECT_ID = os.environ.get('GCP_PROJECT_ID')
-GOOGLE_SHEET_ID = os.environ.get('GOOGLE_SHEET_ID')
+SPREADSHEET_ID = os.environ.get('SPREADSHEET_ID')
 # Create singleton db client
 # This is done for performance reasons > reinstantiating the client is expensive
 db_client = None
 def get_db_client():
     global db_client
     if db_client is None:
-        credentials = default()
-        db_client = Client(credentials = credentials, project=GCP_PROJECT_ID)
+        credentials, project_id = default()
+        db_client = Client(credentials=credentials, project=project_id)
     return db_client
 
 # Dummy cloud function
