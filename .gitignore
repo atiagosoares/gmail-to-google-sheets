@@ -132,3 +132,6 @@ dmypy.json
 .terraform*
 # ttf vars
 terraform.tfvars
+
+# Credentials that may be saved temporarily in the repo
+credentials.json

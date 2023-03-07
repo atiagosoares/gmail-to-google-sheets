@@ -60,6 +60,14 @@ resource "google_service_account" "processor_svc" {
     account_id = "${var.deployment_id}-${var.env}-svc"
     display_name = "Service account for the processor function"   
 }
+
+# Credentials for the service account
+resource "google_service_account_key" "processor_svc_key" {
+    service_account_id = google_service_account.processor_svc.id
+    public_key_type = "TYPE_X509_PEM_FILE"
+    key_algorithm = "KEY_ALG_RSA_2048"
+}
+
 # Give the service account firestore permissions
 resource "google_project_iam_member" "processor_svc_firestore" {
     role = "roles/datastore.user"
@@ -94,4 +102,13 @@ resource "google_cloudfunctions2_function" "processor_function"{
         pubsub_topic = google_pubsub_topic.email_topic.id
         retry_policy = "RETRY_POLICY_RETRY"
     }     
+}
+
+# Outputs
+output "processor_svc_key" {
+    value = google_service_account_key.processor_svc_key.private_key
+    sensitive = true
+}
+output "topic_name" {
+    value = google_pubsub_topic.email_topic.name
 }

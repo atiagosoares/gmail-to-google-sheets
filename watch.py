@@ -9,18 +9,37 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 from datetime import datetime
+import sys
+import json
+
 # If modifying these scopes, delete the file token.json.
 SCOPES = [
     'https://www.googleapis.com/auth/gmail.readonly',
     'https://www.googleapis.com/auth/gmail.metadata'
 ]
-TOPIC_NAME = 'projects/sandbox-372618/topics/gmail-to-gsheets-dev-topic'
 
+def get_args():
+    # Checks if the user has provided a argument
+    # This argument must be a json string
+    # Must contain the keys "processor_svc_key" and "topic_name"
+    # Prints the correct usage if the user has not provided a argument
+
+    try:
+        terraform_output = json.loads(sys.argv[1])
+        assert("processor_svc_key" in terraform_output)
+        assert("topic_name" in terraform_output)
+        return terraform_output
+    except:
+        print('Incorrect argument passed.\nUsage: python watch.py "$(terraform output -json)"')
+        sys.exit(1)
 
 def main():
     """Shows basic usage of the Docs API.
     Prints the title of a sample document.
     """
+    # Load the terraform output
+    terraform_output = get_args()
+
     creds = None
     # The file token.json stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
@@ -32,8 +51,7 @@ def main():
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', SCOPES)
+            flow = InstalledAppFlow.from_client_config(terraform_output["processor_svc_key"], SCOPES)
             creds = flow.run_local_server(port=0)
         # Save the credentials for the next run
         with open('token.json', 'w') as token:
@@ -51,7 +69,6 @@ def main():
 
     except HttpError as err:
         print(err)
-
 
 if __name__ == '__main__':
     main();
