@@ -26,8 +26,7 @@ def get_args():
 
     try:
         terraform_output = json.loads(sys.argv[1])
-        assert("processor_svc_key" in terraform_output)
-        assert("topic_name" in terraform_output)
+        assert("topic_id" in terraform_output)
         return terraform_output
     except:
         print('Incorrect argument passed.\nUsage: python watch.py "$(terraform output -json)"')
@@ -39,6 +38,7 @@ def main():
     """
     # Load the terraform output
     terraform_output = get_args()
+    print(f'Topic name: {terraform_output["topic_id"]["value"]}')
 
     creds = None
     # The file token.json stores the user's access and refresh tokens, and is
@@ -61,9 +61,9 @@ def main():
 
     try:
         gmail = build('gmail', 'v1', credentials=creds)
-        servicerequest = {
+        request = {
           'labelIds': ['INBOX'],
-          'topicName': TOPIC_NAME
+          'topicName': terraform_output['topic_id']['value']
         }
         watch_response = gmail.users().watch(userId='me', body=request).execute()
         exp_time = datetime.fromtimestamp(watch_response['expiration']//1000)
@@ -73,4 +73,4 @@ def main():
         print(err)
 
 if __name__ == '__main__':
-    main();
+    main()

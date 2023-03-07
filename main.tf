@@ -105,6 +105,6 @@ resource "google_cloudfunctions2_function" "processor_function"{
 }
 
 # Outputs
-output "topic_name" {
-    value = google_pubsub_topic.email_topic.name
+output "topic_id" {
+    value = google_pubsub_topic.email_topic.id
 }
