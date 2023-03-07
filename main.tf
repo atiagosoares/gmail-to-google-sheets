@@ -105,10 +105,6 @@ resource "google_cloudfunctions2_function" "processor_function"{
 }
 
 # Outputs
-output "processor_svc_key" {
-    value = google_service_account_key.processor_svc_key.private_key
-    sensitive = true
-}
 output "topic_name" {
     value = google_pubsub_topic.email_topic.name
 }
