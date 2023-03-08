@@ -4,6 +4,7 @@ from google.cloud.firestore import Client
 from google.auth import default
 import os
 from datetime import datetime
+import json
 
 SPREADSHEET_ID = os.environ.get('SPREADSHEET_ID')
 # Create singleton db client
@@ -21,14 +22,15 @@ def get_db_client():
 def handler(cloud_event):
     # Print the event data
     base64_data = cloud_event.data['message']['data']
-    data = b64decode(base64_data).decode('utf-8')
-    now = datetime.now()
+    data = json.loads(
+        b64decode(base64_data).decode('utf-8')
+    )
 
     # Store the data in redis
     db = get_db_client()
-    doc_ref = db.collection(u'events').document(now.strftime("%Y%m%d%H%M%S"))
+    doc_ref = db.collection(u'email_address_info').document(data['emailAddress'])
     doc_ref.set({
-        u'data': data
+        'historyId': data['historyId']
     })
     
     return "Hello world"
