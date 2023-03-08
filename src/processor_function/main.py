@@ -8,6 +8,8 @@ from datetime import datetime
 import json
 
 SPREADSHEET_ID = os.environ.get('SPREADSHEET_ID')
+TOKEN = os.environ.get('TOKEN')
+print(token)
 # Create singleton db client
 # This is done for performance reasons > reinstantiating the client is expensive
 db_client = None
