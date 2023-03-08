@@ -2,6 +2,7 @@ import functions_framework
 from base64 import b64decode
 from google.cloud.firestore import Client
 from google.auth import default
+from googleapiclient.discovery import build
 import os
 from datetime import datetime
 import json
@@ -32,5 +33,32 @@ def handler(cloud_event):
     doc_ref.set({
         'historyId': data['historyId']
     })
+
+    # Initialize the Gmail API
+    credentials, project_id = default()
+    gmail = build('gmail', 'v1', credentials=credentials)
+    # List the messages since the last historyId
+    message_list = []
+    messages = gmail.users().messages().list(
+        userId = data['emailAddress'],
+        q = f'after:{data["historyId"]}'
+    ).execute() 
+    messages.extend(messages['messages'])
+
+    # pagination, if necessary (probalby not, most of the times)
+    while 'nextPageToken' in messages:
+        #TODO: implement exponential backoff
+        page_token = messages['nextPageToken']
+        messages = gmail.users().messages().list(
+            userId = data['emailAddress'],
+            q = f'after:{data["historyId"]}',
+            pageToken = page_token
+        ).execute()
+        messages.extend(messages['messages'])
     
+    # Print new messages. Enough work for today
+    for message in messages:
+        print(message)
+    
+
     return "Hello world"
