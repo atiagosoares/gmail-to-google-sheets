@@ -130,6 +130,21 @@ resource "google_secret_manager_secret" "user_authorized_token" {
   }
 }
 
+# The processor function needs access to the secret
+data "google_iam_policy" "user_authorized_token_policy" {
+  binding {
+    role = "roles/secretmanager.secretAccessor"
+    members = [
+		"serviceAccount:${google_service_account.processor_svc.email}"
+    ]
+  }
+}
+
+resource "google_secret_manager_secret_iam_policy" "policy" {
+  secret_id = google_secret_manager_secret.user_authorized_token.secret_id
+  policy_data = data.google_iam_policy.user_authorized_token_policy.policy_data
+}
+
 # Outputs
 output "topic_id" {
     value = google_pubsub_topic.email_topic.id
