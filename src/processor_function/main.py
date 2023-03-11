@@ -1,7 +1,8 @@
 import functions_framework
 from base64 import b64decode
 from google.cloud.firestore import Client
-from google.auth import default
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 import os
 from datetime import datetime
@@ -9,16 +10,25 @@ import json
 
 SPREADSHEET_ID = os.environ.get('SPREADSHEET_ID')
 TOKEN = os.environ.get('TOKEN')
-print(token)
+
 # Create singleton db client
 # This is done for performance reasons > reinstantiating the client is expensive
 db_client = None
 def get_db_client():
     global db_client
     if db_client is None:
-        credentials, project_id = default()
         db_client = Client(credentials=credentials, project=project_id)
     return db_client
+
+def get_creds(): # Authenticate against Google APIs
+    token_info = json.loads(TOKEN)
+    scopes = ['https://www.googleapis.com/auth/gmail.readonly']
+    creds = Credentials.from_authorized_user_info(token_info, scopes = scopes)
+    if creds.expired:
+        if not creds.refresh_token:
+            raise(Exception("No refresh token"))
+        creds.refresh(Request())
+    return creds
 
 # Dummy cloud function
 @functions_framework.cloud_event
@@ -37,7 +47,7 @@ def handler(cloud_event):
     })
 
     # Initialize the Gmail API
-    credentials, project_id = default()
+    credentials = get_creds()
     gmail = build('gmail', 'v1', credentials=credentials)
     # List the messages since the last historyId
     message_list = []
