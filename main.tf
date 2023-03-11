@@ -100,7 +100,7 @@ resource "google_cloudfunctions2_function" "processor_function"{
     event_trigger {
         event_type = "google.cloud.pubsub.topic.v1.messagePublished"
         pubsub_topic = google_pubsub_topic.email_topic.id
-        retry_policy = "RETRY_POLICY_RETRY"
+        retry_policy = "RETRY_POLICY_DO_NOT_RETRY"
     }     
 }
 

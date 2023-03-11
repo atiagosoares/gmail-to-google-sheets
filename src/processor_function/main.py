@@ -51,9 +51,9 @@ def handler(cloud_event):
 
     # Updating creds
     creds = get_creds(doc['token'])
-    doc_ref.set({'token': creds.to_json()}, merge = True)
+    doc_ref.set({'token': creds.to_json(), 'updated_at': datetime.utcnow().isoformat() + 'Z'}, merge = True)
     # Update historyId
-    doc_ref.set({'historyId': event_data['historyId']}, merge = True)
+    doc_ref.set({'historyId': event_data['historyId'], 'updated_at': datetime.utcnow().isoformat() + 'Z'}, merge = True)
 
     # Initialize the Gmail API
     print("Initializing Gmail Client...")
@@ -62,7 +62,6 @@ def handler(cloud_event):
     print("Getting list of messages...")
     page_counter = 1
     messages = []
-    print(f"Fetching page {page_counter}...")
     response = gmail.users().messages().list(
         userId = event_data['emailAddress'],
         q = f'after:{doc["historyId"]}'
@@ -72,7 +71,6 @@ def handler(cloud_event):
 
     # pagination, if necessary (probalby not, most of the times)
     while 'nextPageToken' in response:
-        print(f"Fetching page {page_counter}...")
         page_token = response['nextPageToken']
         response = gmail.users().messages().list(
             userId = event_data['emailAddress'],
@@ -86,8 +84,8 @@ def handler(cloud_event):
     print('Fetching messges')
     for message in messages:
         print(f"message id: {message['id']}")
-        response = gmai.users().messages().get(
-                userId = event_data['email_address'],
+        response = gmail.users().messages().get(
+                userId = event_data['emailAddress'],
                 id = message['id']
         ).execute()
         print(response)
