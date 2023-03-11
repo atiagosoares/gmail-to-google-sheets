@@ -2,7 +2,8 @@ import functions_framework
 from base64 import b64decode
 from google.cloud.firestore import Client
 from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
+from google.oauth2.credentials import Credentials, credentials
+from google.auth import default
 from googleapiclient.discovery import build
 import os
 from datetime import datetime
@@ -17,6 +18,7 @@ db_client = None
 def get_db_client():
     global db_client
     if db_client is None:
+        credentials, project_id = default()
         db_client = Client(credentials=credentials, project=project_id)
     return db_client
 
@@ -38,8 +40,10 @@ def handler(cloud_event):
     data = json.loads(
         b64decode(base64_data).decode('utf-8')
     )
+    print(f"Received event: {data}")
 
-    # Store the data in redis
+    # Update firestore with new historyId
+    print("Updating historyId...")
     db = get_db_client()
     doc_ref = db.collection(u'email_address_info').document(data['emailAddress'])
     doc_ref.set({
@@ -47,19 +51,24 @@ def handler(cloud_event):
     })
 
     # Initialize the Gmail API
+    print("Initializing Gmail Client...")
     credentials = get_creds()
     gmail = build('gmail', 'v1', credentials=credentials)
     # List the messages since the last historyId
+    print("Getting list of messages...")
+    page_counter = 1
     message_list = []
+    print(f"Fetching page {page_counter}...")
     messages = gmail.users().messages().list(
         userId = data['emailAddress'],
         q = f'after:{data["historyId"]}'
     ).execute() 
     messages.extend(messages['messages'])
+    page_counter += 1
 
     # pagination, if necessary (probalby not, most of the times)
     while 'nextPageToken' in messages:
-        #TODO: implement exponential backoff
+        print(f"Fetching page {page_counter}...")
         page_token = messages['nextPageToken']
         messages = gmail.users().messages().list(
             userId = data['emailAddress'],
@@ -67,6 +76,7 @@ def handler(cloud_event):
             pageToken = page_token
         ).execute()
         messages.extend(messages['messages'])
+        page_counter += 1
     
     # Print new messages. Enough work for today
     for message in messages:
