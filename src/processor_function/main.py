@@ -52,6 +52,8 @@ def handler(cloud_event):
     # Updating creds
     creds = get_creds(doc['token'])
     doc_ref.set({'token': creds.to_json()}, merge = True)
+    # Update historyId
+    doc_ref.set({'historyId': event_data['historyId']}, merge = True)
 
     # Initialize the Gmail API
     print("Initializing Gmail Client...")
@@ -77,8 +79,18 @@ def handler(cloud_event):
             q = f'after:{doc["historyId"]}',
             pageToken = page_token
         ).execute()
-        messages.extend(reponse['messages'])
+        messages.extend(response['messages'])
         page_counter += 1
+
+    # Get the messages by id 
+    print('Fetching messges')
+    for message in messages:
+        print(f"message id: {message['id']}")
+        response = gmai.users().messages().get(
+                userId = event_data['email_address'],
+                id = message['id']
+        ).execute()
+        print(response)
     
     # Print new messages. Enough work for today
     for message in messages:
