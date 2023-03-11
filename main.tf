@@ -99,7 +99,7 @@ resource "google_cloudfunctions2_function" "processor_function"{
       secret_environment_variables {
         key = "TOKEN"
         project_id = var.gcp_config["project"]
-        secret = google_secret_manager_secret.user_authorized_token.name
+        secret = google_secret_manager_secret.user_authorized_token.secret_id
         version = "latest" 
       }
     }
