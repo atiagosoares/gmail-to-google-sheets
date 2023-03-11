@@ -96,53 +96,12 @@ resource "google_cloudfunctions2_function" "processor_function"{
       environment_variables = {
         "SPREADHSEET_ID" = var.google_sheet_id
       }
-      secret_environment_variables {
-        key = "TOKEN"
-        project_id = var.gcp_config["project"]
-        secret = google_secret_manager_secret.user_authorized_token.secret_id
-        version = "latest" 
-      }
     }
     event_trigger {
         event_type = "google.cloud.pubsub.topic.v1.messagePublished"
         pubsub_topic = google_pubsub_topic.email_topic.id
         retry_policy = "RETRY_POLICY_RETRY"
     }     
-}
-
-# Secret to store the user authentication token (Should be replaced by a database in the future)
-resource "google_secret_manager_secret" "user_authorized_token" {
-  secret_id = "${var.deployment_id}-${var.env}-user-authorized-token"
-
-  labels = {
-    label = "my-label"
-  }
-
-  replication {
-    user_managed {
-      replicas {
-        location = "us-central1"
-      }
-      replicas {
-        location = "us-east1"
-      }
-    }
-  }
-}
-
-# The processor function needs access to the secret
-data "google_iam_policy" "user_authorized_token_policy" {
-  binding {
-    role = "roles/secretmanager.secretAccessor"
-    members = [
-		"serviceAccount:${google_service_account.processor_svc.email}"
-    ]
-  }
-}
-
-resource "google_secret_manager_secret_iam_policy" "policy" {
-  secret_id = google_secret_manager_secret.user_authorized_token.secret_id
-  policy_data = data.google_iam_policy.user_authorized_token_policy.policy_data
 }
 
 # Outputs

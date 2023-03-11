@@ -22,7 +22,7 @@ def get_db_client():
         db_client = Client(credentials=credentials, project=project_id)
     return db_client
 
-def get_creds(): # Authenticate against Google APIs
+def get_creds(token): # Authenticate against Google APIs
     token_info = json.loads(TOKEN)
     scopes = ['https://www.googleapis.com/auth/gmail.readonly']
     creds = Credentials.from_authorized_user_info(token_info, scopes = scopes)
@@ -30,6 +30,7 @@ def get_creds(): # Authenticate against Google APIs
         if not creds.refresh_token:
             raise(Exception("No refresh token"))
         creds.refresh(Request())
+        
     return creds
 
 # Dummy cloud function
@@ -37,23 +38,25 @@ def get_creds(): # Authenticate against Google APIs
 def handler(cloud_event):
     # Print the event data
     base64_data = cloud_event.data['message']['data']
-    data = json.loads(
+    event_data = json.loads(
         b64decode(base64_data).decode('utf-8')
     )
     print(f"Received event: {data}")
 
-    # Update firestore with new historyId
-    print("Updating historyId...")
+    # Initializing db client...
+    print("Connecting to firestore...")
     db = get_db_client()
+    print("Fetching document...")
     doc_ref = db.collection(u'email_address_info').document(data['emailAddress'])
-    doc_ref.set({
-        'historyId': data['historyId']
-    })
+    doc = doc_ref.get().to_dict()
+
+    # Updating creds
+    creds = get_creds(doc['token'])
+    doc_ref.set({'token': creds.to_json()}, merge = True)
 
     # Initialize the Gmail API
     print("Initializing Gmail Client...")
-    credentials = get_creds()
-    gmail = build('gmail', 'v1', credentials=credentials)
+    gmail = build('gmail', 'v1', credentials=creds)
     # List the messages since the last historyId
     print("Getting list of messages...")
     page_counter = 1
