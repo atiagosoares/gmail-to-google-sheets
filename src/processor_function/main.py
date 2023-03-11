@@ -10,7 +10,6 @@ from datetime import datetime
 import json
 
 SPREADSHEET_ID = os.environ.get('SPREADSHEET_ID')
-TOKEN = os.environ.get('TOKEN')
 
 # Create singleton db client
 # This is done for performance reasons > reinstantiating the client is expensive
@@ -23,7 +22,7 @@ def get_db_client():
     return db_client
 
 def get_creds(token): # Authenticate against Google APIs
-    token_info = json.loads(TOKEN)
+    token_info = json.loads(token)
     scopes = ['https://www.googleapis.com/auth/gmail.readonly']
     creds = Credentials.from_authorized_user_info(token_info, scopes = scopes)
     if creds.expired:
@@ -60,25 +59,25 @@ def handler(cloud_event):
     # List the messages since the last historyId
     print("Getting list of messages...")
     page_counter = 1
-    message_list = []
+    messages = []
     print(f"Fetching page {page_counter}...")
-    messages = gmail.users().messages().list(
+    response = gmail.users().messages().list(
         userId = event_data['emailAddress'],
         q = f'after:{doc["historyId"]}'
     ).execute() 
-    messages.extend(messages['messages'])
+    messages.extend(response['messages'])
     page_counter += 1
 
     # pagination, if necessary (probalby not, most of the times)
-    while 'nextPageToken' in messages:
+    while 'nextPageToken' in response:
         print(f"Fetching page {page_counter}...")
-        page_token = messages['nextPageToken']
-        messages = gmail.users().messages().list(
+        page_token = response['nextPageToken']
+        response = gmail.users().messages().list(
             userId = event_data['emailAddress'],
             q = f'after:{doc["historyId"]}',
             pageToken = page_token
         ).execute()
-        messages.extend(messages['messages'])
+        messages.extend(reponse['messages'])
         page_counter += 1
     
     # Print new messages. Enough work for today
