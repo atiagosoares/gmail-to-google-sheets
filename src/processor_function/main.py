@@ -41,13 +41,13 @@ def handler(cloud_event):
     event_data = json.loads(
         b64decode(base64_data).decode('utf-8')
     )
-    print(f"Received event: {data}")
+    print(f"Received event: {event_data}")
 
     # Initializing db client...
     print("Connecting to firestore...")
     db = get_db_client()
     print("Fetching document...")
-    doc_ref = db.collection(u'email_address_info').document(data['emailAddress'])
+    doc_ref = db.collection(u'email_address_info').document(event_data['emailAddress'])
     doc = doc_ref.get().to_dict()
 
     # Updating creds
@@ -63,8 +63,8 @@ def handler(cloud_event):
     message_list = []
     print(f"Fetching page {page_counter}...")
     messages = gmail.users().messages().list(
-        userId = data['emailAddress'],
-        q = f'after:{data["historyId"]}'
+        userId = event_data['emailAddress'],
+        q = f'after:{doc["historyId"]}'
     ).execute() 
     messages.extend(messages['messages'])
     page_counter += 1
@@ -74,8 +74,8 @@ def handler(cloud_event):
         print(f"Fetching page {page_counter}...")
         page_token = messages['nextPageToken']
         messages = gmail.users().messages().list(
-            userId = data['emailAddress'],
-            q = f'after:{data["historyId"]}',
+            userId = event_data['emailAddress'],
+            q = f'after:{doc["historyId"]}',
             pageToken = page_token
         ).execute()
         messages.extend(messages['messages'])
