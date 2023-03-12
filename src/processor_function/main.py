@@ -64,7 +64,7 @@ def handler(cloud_event):
     messages = []
     response = gmail.users().messages().list(
         userId = event_data['emailAddress'],
-        q = f'after:{doc["historyId"]}'
+        q = f'startHistoryId:{doc["startHistoryId"]}'
     ).execute() 
     messages.extend(response['messages'])
     page_counter += 1
@@ -74,7 +74,7 @@ def handler(cloud_event):
         page_token = response['nextPageToken']
         response = gmail.users().messages().list(
             userId = event_data['emailAddress'],
-            q = f'after:{doc["historyId"]}',
+            q = f'startHistoryId:{doc["startHistoryId"]}',
             pageToken = page_token
         ).execute()
         messages.extend(response['messages'])
@@ -92,7 +92,7 @@ def handler(cloud_event):
     
     # Print new messages. Enough work for today
     for message in messages:
-        print(message)
+        print(json.dumps(message))
     
 
     return "Hello world"
